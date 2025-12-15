@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>今天也很棒</title>
+    <!-- 引入 Confetti 特效庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- 引入 html2canvas 庫，用於將 HTML 轉為圖片 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> 
+    <!-- 引入圓潤可愛的字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=400;500;700&family=Varela+Round&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* 馬卡龍暖色系配色 */
+            --primary-gradient: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            --bg-color: #FFF9F5;
+            --card-bg: #FFFFFF;
+            --text-main: #5D5D5D;
+            --text-light: #9E9E9E;
+            --accent: #FF8A65; /* 溫暖的珊瑚橘 */
+            --accent-light: #FFCCBC;
+            --highlight: #FFB7B2;
+            --shadow: rgba(255, 154, 158, 0.2);
+            --sub-task-border: #F0F0F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Varela Round', 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 50px; /* 底部留白 */
+            min-height: 100vh;
+        }
+
+        /* 標題區 */
+        header {
+            margin-bottom: 25px;
+            padding-top: 10px;
+        }
+        
+        h1 {
+            font-size: 1.6rem;
+            color: var(--accent);
+            margin: 0;
+            letter-spacing: 1.5px;
+        }
+
+        p.subtitle {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        /* 卡片通用樣式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 30px var(--shadow);
+            margin-bottom: 24px;
+            transition: transform 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* 進度儀表板 */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 30px;
+            padding-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 裝飾背景 */
+        .dashboard::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 100px;
+            height: 100px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            opacity: 0.2;
+            filter: blur(20px);
+        }
+
+        .progress-circle {
+            position: relative;
+            width: 160px;
+            height: 160px;
+        }
+
+        svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        circle {
+            fill: none;
+            stroke-width: 14;
+            stroke-linecap: round;
+        }
+
+        .bg-circle {
+            stroke: #F2F2F2;
+        }
+
+        .fg-circle {
+            stroke: url(#gradient);
+            stroke-dasharray: 471; /* 2 * PI * 75 */
+            stroke-dashoffset: 471;
+            transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .percentage-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .motivation-text {
+            margin-top: 20px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--text-main);
+            min-height: 1.5em;
+            padding: 0 10px;
+            line-height: 1.4;
+        }
+
+        /* 區塊標題 */
+        h2 {
+            font-size: 1.15rem;
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        /* 輸入框樣式 */
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid #F0F0F0;
+            border-radius: 16px;
+            font-size: 16px; /* 防止 iOS 自動縮放 */
+            outline: none;
+            transition: all 0.3s;
+            background: #FAFAFA;
+            color: var(--text-main);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-light);
+            background: #FFF;
+            box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.1);
+        }
+
+        input[type="text"]::placeholder {
+            color: #CCC;
+        }
+
+        button.add-btn {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 127, 80, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+        }
+
+        button.add-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 清單樣式 */
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            padding: 14px 0;
+            border-bottom: 1px solid #F7F7F7;
+            animation: fadeIn 0.4s ease;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        /* 主要任務列容器 */
+        .main-task-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* 子任務相關樣式 */
+        .sub-task-container {
+            margin-top: 8px;
+            margin-left: 13px; /* 對齊 checkbox 中心 */
+            padding-left: 20px; /* 縮排 */
+            border-left: 2px solid var(--sub-task-border);
+        }
+
+        .sub-task-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            position: relative;
+        }
+        
+        .sub-task-item::before {
+            content: '';
+            position: absolute;
+            left: -22px; /* 連接線位置 */
+            top: 50%;
+            width: 15px;
+            height: 2px;
+            background: var(--sub-task-border);
+        }
+
+        .sub-input-wrapper {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .sub-input {
+            padding: 8px 12px !important;
+            font-size: 0.9rem !important;
+            border-radius: 10px !important;
+        }
+
+        /* 自定義勾選框 */
+        .custom-checkbox {
+            width: 26px;
+            height: 26px;
+            border: 2px solid var(--accent-light);
+            border-radius: 50%;
+            margin-right: 14px;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: #FFF;
+        }
+
+        /* 子任務的勾選框稍微小一點 */
+        .sub-task-item .custom-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-color: #E0E0E0;
+        }
+
+        .completed > .custom-checkbox, /* 主任務完成 */
+        .sub-task-item.completed .custom-checkbox /* 子任務完成 */ {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+        
+        .sub-task-item.completed .custom-checkbox {
+            background-color: var(--highlight); /* 子任務完成顏色淡一點 */
+            border-color: var(--highlight);
+        }
+
+        .custom-checkbox::after {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 4px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2.5px 2.5px 0;
+            transform: rotate(45deg);
+        }
+        
+        /* 子任務勾勾調整 */
+        .sub-task-item .custom-checkbox::after {
+            left: 6px;
+            top: 3px;
+            width: 4px;
+            height: 9px;
+            border-width: 0 2px 2px 0;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 1.05rem;
+            transition: all 0.3s;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+
+        .completed > .task-text,
+        .sub-task-item.completed .task-text {
+            color: var(--text-light);
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        /* 按鈕群組 */
+        .action-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            padding: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .add-sub-btn {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.4rem;
+        }
+
+        .delete-btn {
+            color: var(--highlight);
+            opacity: 0.6;
+        }
+        
+        .delete-btn:hover {
+            opacity: 1;
+        }
+        
+        /* 子任務刪除按鈕 */
+        .sub-delete-btn {
+            color: #ddd;
+            font-size: 1rem;
+            padding: 4px;
+            opacity: 0.5;
+        }
+        .sub-delete-btn:hover {
+            color: var(--highlight);
+            opacity: 1;
+        }
+
+        /* 成長足跡 - 月曆 */
+        .calendar-wrapper {
+            padding: 5px 0;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+
+        .calendar-day-header {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            border-radius: 50%;
+            background-color: #F8F8F8;
+            transition: all 0.3s;
+            color: var(--text-light);
+        }
+        
+        .calendar-day.today {
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .calendar-day.filled {
+            color: white;
+            font-weight: bold;
+        }
+
+        /* AI 鼓勵彈出提示 (Toast) */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            color: #5D5D5D;
+            padding: 16px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateY(20px) scale(0.9);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* 標籤小字 */
+        .badge {
+            font-size: 0.75rem;
+            background: #FFE0B2;
+            color: #E65100;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* 新增分享按鈕樣式 */
+        .share-btn {
+            color: var(--accent);
+            padding: 0;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 138, 101, 0.1);
+        }
+
+        .share-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Loading Overlay for Export */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 138, 101, 0.1);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 手機適配修正 */
+        @media (max-width: 380px) {
+            .progress-circle { width: 130px; height: 130px; }
+            .percentage-text { font-size: 1.8rem; }
+            h1 { font-size: 1.4rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+            <div style="width: 50px;"></div> <!-- Placeholder for centering -->
+            <div style="text-align: center;">
+                <h1>今天也很棒</h1>
+                <p class="subtitle">一點一點，累積更好的自己</p>
+            </div>
+            <!-- 分享按鈕 -->
+            <button class="icon-btn share-btn" onclick="exportToPNG()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主內容包裹層，用於截圖 -->
+    <div id="export-target">
+        <!-- 進度儀表板 -->
+        <div class="card dashboard">
+            <div class="progress-circle">
+                <svg>
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#FF9A9E" />
+                            <stop offset="100%" stop-color="#FF8A65" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="bg-circle" cx="80" cy="80" r="75"></circle>
+                    <circle class="fg-circle" cx="80" cy="80" r="75" id="progress-ring"></circle>
+                </svg>
+                <div class="percentage-text" id="percentage-text">0%</div>
+            </div>
+            <div class="motivation-text" id="motivation-text">開啟今天吧!</div>
+        </div>
+
+        <!-- 今日重點區 (權重 45%) -->
+        <div class="card">
+            <h2>✨ 今日最重要 <span id="core-count" class="badge">0/3</span></h2>
+            <div class="input-group" id="core-input-group">
+                <input type="text" id="core-input" placeholder="輸入最重要的目標..." maxlength="20">
+                <button class="add-btn" onclick="addCoreGoal()">+</button>
+            </div>
+            <ul id="core-list">
+                <!-- JS生成列表 -->
+            </ul>
+        </div>
+
+        <!-- 任務清單 (權重 55%) -->
+        <div class="card">
+            <h2>📝 日常與待辦</h2>
+            <div class="input-group">
+                <input type="text" id="task-input" placeholder="還有什麼要做的呢？" maxlength="20">
+                <button class="add-btn" onclick="addTask()">+</button>
+            </div>
+            <ul id="task-list">
+                <!-- JS生成列表 -->
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 過去成績閱覽 -->
+    <div class="card">
+        <h2>📅 成長足跡</h2>
+        <div class="calendar-wrapper">
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- JS 生成月曆 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 鼓勵小語彈出視窗 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Loading Overlay for Export -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        正在生成分享圖...
+    </div>
+
+    <script>
+        // --- 核心資料結構 ---
+        const APP_KEY = 'today_is_great_app_v3_subtasks'; // 升級版本 Key
+        
+        let appData = {
+            date: new Date().toLocaleDateString(),
+            coreGoals: [], // { id, text, completed, subTasks: [] }
+            tasks: [ 
+                { id: 'default_1', text: '📖 閱讀 30 分鐘', completed: false },
+                { id: 'default_2', text: '🏃‍♀️ 運動流汗', completed: false }
+            ],
+            history: {} // { "2023/12/15": 85 }
+        };
+
+        const CORE_WEIGHT_TOTAL = 45; // 重點目標總權重佔 45%
+        const TASK_WEIGHT_TOTAL = 55; // 一般任務總權重佔 55%
+
+        // AI 鼓勵語錄庫
+        const aiEncouragements = [
+            "太棒了！最難的你都做到了！🌟",
+            "這種專注力真是閃閃發光！🔥",
+            "離理想的自己又更近了一步！💪",
+            "今天的你，比昨天更厲害了！✨",
+            "保持這個節奏，你是最棒的！🌈",
+            "哇！這麼重要的目標完成了，好佩服你！💖",
+            "努力的樣子真的好迷人！😍"
+        ];
+
+        // --- 初始化程式 ---
+        function init() {
+            loadData();
+            checkNewDay();
+            renderAll();
+        }
+
+        // --- 資料存取 ---
+        function saveData() {
+            try {
+                // 更新今日歷史紀錄
+                appData.history[appData.date] = calculateProgress();
+                localStorage.setItem(APP_KEY, JSON.stringify(appData));
+                renderCalendar(); // 存檔時順便更新月曆顏色
+            } catch (e) {
+                console.error("Save failed", e);
+            }
+        }
+
+        function loadData() {
+            // 嘗試讀取新版資料
+            let saved = localStorage.getItem(APP_KEY);
+            
+            // 如果沒有新版資料，嘗試讀取舊版 (v2) 並遷移
+            if (!saved) {
+                const oldKey = 'today_is_great_app_v2';
+                const oldSaved = localStorage.getItem(oldKey);
+                if (oldSaved) {
+                    saved = oldSaved;
+                    localStorage.removeItem(oldKey); // 遷移後刪除舊資料
+                }
+            }
+
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    appData = { ...appData, ...parsed };
+                    
+                    // 資料結構補丁：確保 coreGoals 都有 subTasks 陣列
+                    appData.coreGoals.forEach(g => {
+                        if (!g.subTasks) g.subTasks = [];
+                    });
+
+                } catch (e) {
+                    console.error("Load failed", e);
+                }
+            }
+        }
+
+        // 檢查是否是新的一天
+        function checkNewDay() {
+            const today = new Date().toLocaleDateString();
+            
+            // 如果日期不同，進行重置
+            if (appData.date !== today) {
+                appData.date = today;
+                appData.coreGoals = []; // 清空重點目標 (含子任務)
+                appData.tasks = [ // 重置每日任務
+                    { id: 'def_' + Date.now() + '1', text: '📖 閱讀 30 分鐘', completed: false },
+                    { id: 'def_' + Date.now() + '2', text: '🏃‍♀️ 運動流汗', completed: false }
+                ];
+                saveData();
+                window.hasCelebrated = false;
+            }
+        }
+
+        // --- 進度計算邏輯 ---
+        function calculateProgress() {
+            let coreScore = 0;
+            let taskScore = 0;
+
+            // 1. 計算重點目標分數 (滿分 45)
+            // 分數計算依然以「主目標」是否完成為準，子任務是輔助
+            if (appData.coreGoals.length > 0) {
+                const weightPerCore = CORE_WEIGHT_TOTAL / appData.coreGoals.length;
+                const completedCores = appData.coreGoals.filter(g => g.completed).length;
+                coreScore = completedCores * weightPerCore;
+            } else {
+                coreScore = 0;
+            }
+
+            // 2. 計算一般任務分數 (滿分 55)
+            if (appData.tasks.length > 0) {
+                const weightPerTask = TASK_WEIGHT_TOTAL / appData.tasks.length;
+                const completedTasks = appData.tasks.filter(t => t.completed).length;
+                taskScore = completedTasks * weightPerTask;
+            }
+
+            if (appData.coreGoals.length === 0 && appData.tasks.length === 0) return 0;
+            return Math.min(100, Math.round(coreScore + taskScore));
+        }
+
+        // --- 介面渲染 ---
+        function renderAll() {
+            renderCoreGoals();
+            renderTasks();
+            updateDashboard();
+            renderCalendar();
+        }
+
+        function updateDashboard() {
+            const percent = calculateProgress();
+            
+            const circle = document.getElementById('progress-ring');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (percent / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            const textElem = document.getElementById('percentage-text');
+            animateValue(textElem, parseInt(textElem.textContent), percent, 500);
+
+            const motivation = document.getElementById('motivation-text');
+            let message = "";
+            if (percent === 0) message = "開啟今天吧! ☀️";
+            else if (percent < 30) message = "踏出第一步了，很棒！🌱";
+            else if (percent < 50) message = "漸入佳境，加油加油 🚀";
+            else if (percent < 80) message = "今天你好努力了，你很棒 💖";
+            else if (percent < 100) message = "只差一點點，衝刺吧！🔥";
+            else message = "記得好好休息，你很厲害了 🏆";
+            motivation.textContent = message;
+
+            if (percent === 100 && !window.hasCelebrated) {
+                triggerConfetti();
+                window.hasCelebrated = true;
+                showToast("🎉 太神啦！今日任務全制霸！");
+            } else if (percent < 100) {
+                window.hasCelebrated = false;
+            }
+        }
+
+        function animateValue(obj, start, end, duration) {
+            if (start === end) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start) + "%";
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // --- 重點目標邏輯 (含子任務) ---
+        function renderCoreGoals() {
+            const list = document.getElementById('core-list');
+            const inputGroup = document.getElementById('core-input-group');
+            const countBadge = document.getElementById('core-count');
+            
+            list.innerHTML = '';
+            countBadge.textContent = `${appData.coreGoals.length}/3`;
+
+            if (appData.coreGoals.length >= 3) {
+                inputGroup.style.display = 'none';
+            } else {
+                inputGroup.style.display = 'flex';
+            }
+
+            appData.coreGoals.forEach((goal, index) => {
+                const li = document.createElement('li');
+                if (goal.completed) li.classList.add('completed');
+                
+                // 產生子任務 HTML
+                let subTasksHtml = '';
+                if (goal.subTasks && goal.subTasks.length > 0) {
+                    subTasksHtml = goal.subTasks.map((sub, subIndex) => `
+                        <div class="sub-task-item ${sub.completed ? 'completed' : ''}">
+                            <div class="custom-checkbox" onclick="toggleSubTask(${index}, ${subIndex})"></div>
+                            <span class="task-text">${sub.text}</span>
+                            <button class="icon-btn sub-delete-btn" onclick="deleteSubTask(${index}, ${subIndex})">×</button>
+                        </div>
+                    `).join('');
+                }
+
+                // 主結構
+                li.innerHTML = `
+                    <div class="main-task-row">
+                        <div class="custom-checkbox" onclick="toggleCore(${index})"></div>
+                        <span class="task-text">${goal.text}</span>
+                        <div class="action-group">
+                            <button class="icon-btn add-sub-btn" onclick="showSubInput(${index})">＋</button>
+                            <button class="icon-btn delete-btn" onclick="deleteCore(${index})">×</button>
+                        </div>
+                    </div>
+                    
+                    <div class="sub-task-container">
+                        ${subTasksHtml}
+                        <div class="sub-input-wrapper" id="sub-input-box-${index}" style="display: none;">
+                            <input type="text" class="sub-input" id="sub-input-${index}" placeholder="輸入小步驟..." onkeydown="handleSubInputKey(event, ${index})">
+                            <button class="add-btn" style="width: 40px; height: 40px; font-size: 1.2rem;" onclick="submitSubTask(${index})">✓</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function addCoreGoal() {
+            const input = document.getElementById('core-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            if (appData.coreGoals.length >= 3) {
+                showToast("重點目標最多 3 個喔！");
+                return;
+            }
+
+            appData.coreGoals.push({ id: Date.now(), text: text, completed: false, subTasks: [] });
+            input.value = '';
+            saveData();
+            renderAll();
+        }
+
+        function toggleCore(index) {
+            const newState = !appData.coreGoals[index].completed;
+            appData.coreGoals[index].completed = newState;
+            
+            // UX 優化：如果主任務被勾選，自動勾選所有子任務
+            if (newState && appData.coreGoals[index].subTasks) {
+                appData.coreGoals[index].subTasks.forEach(sub => sub.completed = true);
+            }
+            // 如果主任務被取消勾選，是否要取消子任務？
+            // 為了方便，這裡選擇「不取消」，保留子任務的進度，因為可能是不小心按到
+
+            saveData();
+            renderAll();
+            
+            if (appData.coreGoals[index].completed) {
+                const randomMsg = aiEncouragements[Math.floor(Math.random() * aiEncouragements.length)];
+                showToast(randomMsg);
+                confetti({
+                    particleCount: 30,
+                    spread: 50,
+                    origin: { y: 0.7 },
+                    colors: ['#FF9A9E', '#FF8A65']
+                });
+            }
+        }
+
+        function deleteCore(index) {
+            // 使用自定義的 modal 替換 confirm()
+            const isConfirmed = window.confirm('確定要刪除這個重點目標嗎？');
+            if(isConfirmed) {
+                appData.coreGoals.splice(index, 1);
+                saveData();
+                renderAll();
+            }
+        }
+
+        // --- 子任務邏輯 ---
+        function showSubInput(index) {
+            const box = document.getElementById(`sub-input-box-${index}`);
+            const input = document.getElementById(`sub-input-${index}`);
+            
+            if (box.style.display === 'none') {
+                box.style.display = 'flex';
+                input.focus();
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        function handleSubInputKey(e, index) {
+            if (e.key === 'Enter') {
+                submitSubTask(index);
+            }
+        }
+
+        function submitSubTask(index) {
+            const input = document.getElementById(`sub-input-${index}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (!appData.coreGoals[index].subTasks) {
+                appData.coreGoals[index].subTasks = [];
+            }
+
+            appData.coreGoals[index].subTasks.push({
+                id: Date.now(),
+                text: text,
+                completed: false
+            });
+
+            // 邏輯上：新增了待辦事項，代表主任務還沒做完
+            if (appData.coreGoals[index].completed) {
+                appData.coreGoals[index].completed = false;
+            }
+
+            input.value = '';
+            // 保持輸入框開啟，方便連續輸入
+            input.focus(); 
+            
+            saveData();
+            renderAll();
+            // 重新顯示輸入框，因為 renderAll 會重繪
+            showSubInput(index);
+        }
+
+        function toggleSubTask(goalIndex, subIndex) {
+            const goal = appData.coreGoals[goalIndex];
+            goal.subTasks[subIndex].completed = !goal.subTasks[subIndex].completed;
+            
+            // 如果子任務取消勾選，主任務如果是完成狀態，應該要變回未完成
+            if (!goal.subTasks[subIndex].completed && goal.completed) {
+                goal.completed = false;
+            }
+
+            saveData();
+            renderAll();
+        }
+
+        function deleteSubTask(goalIndex, subIndex) {
+            appData.coreGoals[goalIndex].subTasks.splice(subIndex, 1);
+            saveData();
+            renderAll();
+        }
+
+        // --- 一般任務邏輯 ---
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+
+            appData.tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = 'main-task-row'; // 復用樣式
+                if (task.completed) li.classList.add('completed');
+                
+                li.innerHTML = `
+                    <div class="custom-checkbox" onclick="toggleTask(${index})"></div>
+                    <span class="task-text">${task.text}</span>
+                    <button class="icon-btn delete-btn" onclick="deleteTask(${index})">×</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function addTask() {
+            const input = document.getElementById('task-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appData.tasks.push({ id: Date.now(), text: text, completed: false });
+            input.value = '';
+            saveData();
+            renderAll();
+        }
+
+        function toggleTask(index) {
+            appData.tasks[index].completed = !appData.tasks[index].completed;
+            saveData();
+            renderAll();
+        }
+
+        function deleteTask(index) {
+            // 使用自定義的 modal 替換 confirm()
+            const isConfirmed = window.confirm('確定要刪除這個任務嗎？');
+            if(isConfirmed) {
+                appData.tasks.splice(index, 1);
+                saveData();
+                renderAll();
+            }
+        }
+
+        // --- 月曆邏輯 ---
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth(); 
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const days = ['日', '一', '二', '三', '四', '五', '六'];
+            days.forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'calendar-day-header';
+                div.textContent = d;
+                grid.appendChild(div);
+            });
+
+            for (let i = 0; i < firstDay; i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const div = document.createElement('div');
+                div.className = 'calendar-day';
+                div.textContent = i;
+
+                const dateStr = new Date(year, month, i).toLocaleDateString();
+                
+                if (dateStr === appData.date) {
+                    div.classList.add('today');
+                }
+
+                const score = appData.history[dateStr];
+                if (score !== undefined && score > 0) {
+                    div.classList.add('filled');
+                    if (score < 30) div.style.backgroundColor = '#FFCDD2';
+                    else if (score < 60) div.style.backgroundColor = '#EF9A9A';
+                    else if (score < 90) div.style.backgroundColor = '#FF8A65';
+                    else div.style.backgroundColor = '#E64A19';
+                }
+
+                grid.appendChild(div);
+            }
+        }
+
+        // --- 分享功能邏輯 ---
+        function exportToPNG() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'flex'; // 顯示 Loading
+
+            const element = document.getElementById('export-target');
+
+            // 暫時隱藏不適合截圖的元素 (輸入框、按鈕)
+            const inputs = element.querySelectorAll('input, button.add-btn, button.icon-btn');
+            const originalDisplays = [];
+            inputs.forEach(el => {
+                originalDisplays.push(el.style.display);
+                el.style.display = 'none';
+            });
+            
+            // 讓整個目標區塊的背景變成白色，避免 html2canvas 誤判
+            const originalBg = element.style.backgroundColor;
+            element.style.backgroundColor = 'white';
+
+            html2canvas(element, {
+                scale: 2, // 提高解析度
+                useCORS: true,
+                backgroundColor: null, // 使用元素的背景色
+                allowTaint: true
+            }).then(canvas => {
+                // 恢復被隱藏的元素
+                inputs.forEach((el, i) => {
+                    el.style.display = originalDisplays[i];
+                });
+                element.style.backgroundColor = originalBg; // 恢復背景色
+                overlay.style.display = 'none'; // 隱藏 Loading
+
+                // 彈出預覽視窗
+                try {
+                    const imgData = canvas.toDataURL('image/png');
+                    const imageWindow = window.open('', '_blank');
+                    imageWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>今天也很棒 - 分享圖</title>
+                                <style>
+                                    body { margin: 0; background-color: #f5f5f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+                                    img { max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+                                    h2 { color: #FF8A65; margin-bottom: 20px; font-family: 'Varela Round', 'Noto Sans TC', sans-serif; }
+                                    button { 
+                                        padding: 10px 20px; 
+                                        background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+                                        border: none;
+                                        border-radius: 12px;
+                                        color: #5D5D5D;
+                                        font-weight: bold;
+                                        cursor: pointer;
+                                        margin-top: 20px;
+                                        box-shadow: 0 4px 10px rgba(255, 138, 101, 0.2);
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <h2>長按圖片儲存或截圖分享！</h2>
+                                <img src="${imgData}" alt="今天也很棒 - 分享圖">
+                                <button onclick="window.close()">關閉</button>
+                            </body>
+                        </html>
+                    `);
+                } catch (error) {
+                    console.error("PNG export failed:", error);
+                    showToast("❌ 圖片生成失敗，請稍後再試。");
+                }
+            }).catch(error => {
+                // 恢復被隱藏的元素
+                inputs.forEach((el, i) => {
+                    el.style.display = originalDisplays[i];
+                });
+                element.style.backgroundColor = originalBg; // 恢復背景色
+                overlay.style.display = 'none'; // 隱藏 Loading
+                console.error("html2canvas failed:", error);
+                showToast("❌ 圖片生成失敗，請檢查瀏覽器權限。");
+            });
+        }
+
+        // --- 工具 ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            if (window.toastTimeout) clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        function triggerConfetti() {
+            var duration = 3000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#FF9A9E', '#FECFEF', '#FF8A65']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#FF9A9E', '#FECFEF', '#FF8A65']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        // 啟動！
+        init();
+
+    </script>
+</body>
+</html>
